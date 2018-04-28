@@ -31,7 +31,9 @@ symbols = json_data['Data'][0]['Members'].map{|coin| coin['Coin']['Symbol']}.joi
 prices = JSON.parse(open("https://min-api.cryptocompare.com/data/pricemulti?fsyms=#{symbols}&tsyms=USD").read)
 total = 0
 json_data['Data'][0]['Members'].each do |coin|
-  total += prices[coin['Coin']['Symbol']]['USD'] * coin['Amount']
+  if prices.include?(coin['Coin']['Symbol'])
+    total += prices[coin['Coin']['Symbol']]['USD'] * coin['Amount']
+  end
 end
 puts "#{total.round(0)}"
 
