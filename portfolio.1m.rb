@@ -47,8 +47,15 @@ end
 total = coins.reduce(0) {|sum,c| sum + c[1][:total] }
 puts "#{total.round(0)}"
 puts "---"
+by_change = coins.sort{|a,b| b[1][:change] <=> a[1][:change]}
+current = 0
+def change_line(symbol, coin, prices)
+  puts "#{symbol.ljust(6)} #{prices['RAW'][symbol]['USD']['PRICE'].round(4).to_s.ljust(8)} #{(coin[:change].round(1).to_s+'%').ljust(6)} : #{coin[:total].round(0)}$ | color=#{coin[:change] > 0 ? 'green' : 'red'} href=https://coinmarketcap.com/currencies/#{symbol.downcase}/ alternate=true"
+end
 coins.sort{|a,b| b[1][:total] <=> a[1][:total]}.each do |symbol, coin|
-  puts "#{symbol.ljust(6)} #{prices['RAW'][symbol]['USD']['PRICE'].round(4).to_s.ljust(8)} #{(coin[:change].round(1).to_s+'%').ljust(6)} : #{coin[:total].round(0)}$ | color:#{coin[:change] > 0 ? 'green' : 'red'} href=https://coinmarketcap.com/currencies/#{symbol.downcase}/"
+  puts "#{symbol.ljust(6)} #{prices['RAW'][symbol]['USD']['PRICE'].round(4).to_s.ljust(8)} #{(coin[:change].round(1).to_s+'%').ljust(6)} : #{coin[:total].round(0)}$ | color=#{coin[:change] > 0 ? 'green' : 'red'} href=https://coinmarketcap.com/currencies/#{symbol.downcase}/"
+  change_line(by_change[current][0], by_change[current][1], prices)
+  current += 1
 end
 
 # top value currencies (accumulated positions) - same fields
