@@ -27,15 +27,28 @@ headers = { "Cookie" => settings['cookie'] }
 resp = http.get(uri.request_uri, headers)
 page = resp.body
 json_data = JSON.parse(page.split("portfolioManager.setPortfolioData(")[1].split(');')[0])
-symbols = json_data['Data'][0]['Members'].map{|coin| coin['Coin']['Symbol']}.join(',')
-prices = JSON.parse(open("https://min-api.cryptocompare.com/data/pricemulti?fsyms=#{symbols}&tsyms=USD").read)
+symbols = json_data['Data'][0]['Members'].map{|coin| coin['Coin']['Symbol']}.uniq.join(',')
+prices = JSON.parse(open("https://min-api.cryptocompare.com/data/pricemultifull?fsyms=#{symbols}&tsyms=USD").read)
 total = 0
+coins = {}
 json_data['Data'][0]['Members'].each do |coin|
-  if prices.include?(coin['Coin']['Symbol'])
-    total += prices[coin['Coin']['Symbol']]['USD'] * coin['Amount']
+  symbol = coin['Coin']['Symbol']
+  next unless prices['RAW'].include?(symbol)
+  if coins.include?(symbol)
+    coins[symbol][:amount] += coin['Amount']
+  else
+    coins[symbol] = {
+      amount: coin['Amount'],
+      change: prices['RAW'][symbol]['USD']['CHANGEPCT24HOUR']
+    }
   end
+  coins[symbol][:total] = prices['RAW'][symbol]['USD']['PRICE'] * coins[symbol][:amount]
 end
+total = coins.reduce(0) {|sum,c| sum + c[1][:total] }
 puts "#{total.round(0)}"
+puts "---"
+coins.sort{|a,b| b[1][:total] <=> a[1][:total]}.each do |symbol, coin|
+  puts "#{symbol.ljust(6)} #{prices['RAW'][symbol]['USD']['PRICE'].round(4).to_s.ljust(8)} #{(coin[:change].round(1).to_s+'%').ljust(6)} : #{coin[:total].round(0)}$ | color:#{coin[:change] > 0 ? 'green' : 'red'} href=https://coinmarketcap.com/currencies/#{symbol.downcase}/"
+end
 
-# add 24h top gainers (+% current price totalUSDforAllPositions )
 # top value currencies (accumulated positions) - same fields
