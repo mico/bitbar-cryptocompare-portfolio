@@ -27,6 +27,10 @@ headers = { "Cookie" => settings['cookie'] }
 resp = http.get(uri.request_uri, headers)
 page = resp.body
 json_data = JSON.parse(page.split("portfolioManager.setPortfolioData(")[1].split(');')[0])
+if json_data.include?("Message") && json_data["Message"].include?("You have to login or register")
+    puts ":exclamation: Please update cookie"
+    exit
+end
 symbols = json_data['Data'][0]['Members'].map{|coin| coin['Coin']['Symbol']}.uniq.join(',')
 prices = JSON.parse(open("https://min-api.cryptocompare.com/data/pricemultifull?fsyms=#{symbols}&tsyms=USD").read)
 total = 0
